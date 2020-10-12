@@ -18,3 +18,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 Route::get('/mapa/cargar', 'mapaController@index');
+Route::get('/tipovehiculo/cargar', 'tipoVehiculoController@index');
+Route::get('/disponibles/cargar/{id}', 'mapaController@disponibles');
+Route::get('/personas/buscar/{documento}', 'personasController@buscar');
+Route::post('/entrada/registrar', 'movimientosController@salvar');
