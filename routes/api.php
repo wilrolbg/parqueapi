@@ -21,4 +21,14 @@ Route::get('/mapa/cargar', 'mapaController@index');
 Route::get('/tipovehiculo/cargar', 'tipoVehiculoController@index');
 Route::get('/disponibles/cargar/{id}', 'mapaController@disponibles');
 Route::get('/personas/buscar/{documento}', 'personasController@buscar');
+Route::get('/movimientos/buscar/{identificador}', 'movimientosController@consultarmovimiento');
+Route::get('/tarifas/consultar/', 'tarifasController@consultartarifas');
 Route::post('/entrada/registrar', 'movimientosController@salvar');
+Route::put('/tarifas/actualizar/{id}', 'tarifasController@actualizartarifas');
+Route::put('/descuento/actualizar/{id}', 'descuentosController@actualizardescuento');
+Route::put('/registrar/salida/{tipo_vehiculo_id}', 'movimientosController@registrarsalida');
+
+//imprimir reportes
+
+Route::get('/imprimir/ticketentrada/{identificador}', 'movimientosController@imprimirTicketEntrada');
+Route::post('/imprimir/ticketsalida', 'movimientosController@imprimirTicketSalida');
