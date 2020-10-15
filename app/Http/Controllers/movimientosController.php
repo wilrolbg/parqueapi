@@ -144,6 +144,7 @@ class movimientosController extends Controller
             $Movimientos = movimientos::find($request->id);
             $Movimientos->fecha_salida  = date('Y-m-d');
             $Movimientos->hora_salida  = date('h:i a');
+            $Movimientos->status_mov    = 'C';
             $Movimientos->save();            
         } //fin Si son Bicicletas
         
@@ -226,7 +227,9 @@ class movimientosController extends Controller
         foreach($vehiculo as $data){
             $id_vehiculo = $data->id;
             $placa = $data->identificador;
+            $id_persona = $data->personas_id;
         }
+
         $entrada = DB::table('movimientos')
                           ->where('movimientos.vehiculos_id', '=', $id_vehiculo)
                           ->where('movimientos.status_mov', '=', 'A')
@@ -235,13 +238,20 @@ class movimientosController extends Controller
             $id_mapa = $data->mapa_id;
             $fecha_entrada = $data->fecha_entrada;
             $hora_entrada = $data->hora_entrada;
-        }                                          
+        }
+        
+        $persona = DB::table('personas')->where('personas.id', '=', $id_persona)->select('personas.nombres', 'personas.apellidos')->get();
+        foreach($persona as $data){
+            $nombres = $data->nombres;
+            $apellidos = $data->apellidos;
+        }
+
         $mapa = DB::table('mapa')->where('mapa.id', '=', $id_mapa)->select('mapa.puesto')->get();
         foreach($mapa as $data){
             $puesto = $data->puesto;
         }
        
-        $view = View::make('reportes.ticketentrada', compact('fecha_entrada', 'hora_entrada', 'puesto', 'placa'))->render();
+        $view = View::make('reportes.ticketentrada', compact('fecha_entrada', 'hora_entrada', 'puesto', 'placa', 'nombres', 'apellidos'))->render();
         $pdf = App::make('dompdf.wrapper');
         $pdf->loadHTML($view)->setPaper('a4');
         return $pdf->stream('ticketentrada');
@@ -277,9 +287,84 @@ class movimientosController extends Controller
             $monto_factura = $data->monto_factura;
         }
         
-        $view = View::make('reportes.ticktetsalida', compact('fecha_entrada', 'hora_entrada', 'puesto', 'placa', 'fecha_salida', 'hora_salida', 'numero_factura', 'fecha_factura', 'monto_factura'))->render();
+        $persona = DB::table('personas')->where('personas.id', '=', $request->id_persona)->select('personas.nombres', 'personas.apellidos')->get();
+        foreach($persona as $data){
+            $nombres = $data->nombres;
+            $apellidos = $data->apellidos;
+        }
+        $view = View::make('reportes.ticktetsalida', compact('fecha_entrada', 'hora_entrada', 'puesto', 'placa', 'fecha_salida', 'hora_salida', 'numero_factura', 'fecha_factura', 'monto_factura', 'nombres', 'apellidos'))->render();
         $pdf = App::make('dompdf.wrapper');
         $pdf->loadHTML($view)->setPaper('a4');
         return $pdf->stream('ticketsalida');
     }
+
+    public function imprimirEntradaSalida(Request $request){
+        $facturas = DB::table('factura')           
+            ->join('movimientos', 'factura.movimientos_id', '=', 'movimientos.id')
+            ->where('factura.fecha', '>=', $request->fecha_desde)
+            ->where('factura.fecha', '<=', $request->fecha_hasta)            
+            ->select('factura.*', 'movimientos.*')
+            ->get();
+
+            $view = View::make('reportes.entradasalida', compact('facturas'))->render();
+            $pdf = App::make('dompdf.wrapper');
+            $pdf->loadHTML($view)->setPaper('a4');
+            return $pdf->stream('movimientos');            
+    }
+
+    public function imprimirVehiculosTipo(Request $request){
+        $vehiculos = DB::table('vehiculos')           
+            ->join('movimientos', 'vehiculos.id', '=', 'movimientos.vehiculos_id')
+            ->where('movimientos.fecha_entrada', '>=', $request->fecha_desde)
+            ->where('movimientos.fecha_entrada', '<=', $request->fecha_hasta)
+            ->where('vehiculos.tipo_vehiculo_id', '=', 1)            
+            ->select('vehiculos.id')
+            ->get();
+            $tipo_1 = count($vehiculos);
+
+            $vehiculos = DB::table('vehiculos')           
+            ->join('movimientos', 'vehiculos.id', '=', 'movimientos.vehiculos_id')
+            ->where('movimientos.fecha_entrada', '>=', $request->fecha_desde)
+            ->where('movimientos.fecha_entrada', '<=', $request->fecha_hasta)
+            ->where('vehiculos.tipo_vehiculo_id', '=', 2)            
+            ->select('vehiculos.id')
+            ->get();
+            $tipo_2 = count($vehiculos);
+
+            $vehiculos = DB::table('vehiculos')           
+            ->join('movimientos', 'vehiculos.id', '=', 'movimientos.vehiculos_id')
+            ->where('movimientos.fecha_entrada', '>=', $request->fecha_desde)
+            ->where('movimientos.fecha_entrada', '<=', $request->fecha_hasta)
+            ->where('vehiculos.tipo_vehiculo_id', '=', 3)            
+            ->select('vehiculos.id')
+            ->get();
+            $tipo_3 = count($vehiculos);            
+
+            $view = View::make('reportes.vehiculostipo', compact('tipo_1', 'tipo_2', 'tipo_3'))->render();
+            $pdf = App::make('dompdf.wrapper');
+            $pdf->loadHTML($view)->setPaper('a4');
+            return $pdf->stream('vehiculostipo');            
+    }
+
+    public function imprimirTotalDiario(Request $request){
+        $SQL = "select sum(monto_factura) as total, fecha from factura where fecha BETWEEN '".$request->fecha_desde."' and '".$request->fecha_hasta."' GROUP BY fecha";
+        $facturas = DB::select($SQL, array(1,20));
+       
+
+            $view = View::make('reportes.montoxdia', compact('facturas'))->render();
+            $pdf = App::make('dompdf.wrapper');
+            $pdf->loadHTML($view)->setPaper('a4');
+            return $pdf->stream('montopordia');            
+    }
+    
+    public function imprimirMasUtilizado(Request $request){
+        $SQL = "SELECT count(DISTINCT mapa_id) as veces, puesto FROM movimientos a, mapa b WHERE fecha_entrada BETWEEN '".$request->fecha_desde."' and '".$request->fecha_hasta."' and b.id = a.mapa_id GROUP by puesto ORDER BY veces DESC";
+        $puestos = DB::select($SQL, array(1,20));
+       
+
+            $view = View::make('reportes.puestoiteraciones', compact('puestos'))->render();
+            $pdf = App::make('dompdf.wrapper');
+            $pdf->loadHTML($view)->setPaper('a4');
+            return $pdf->stream('iteraciones');            
+    }    
 }

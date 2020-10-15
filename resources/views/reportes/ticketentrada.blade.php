@@ -19,6 +19,9 @@
         <td>=================================================</td>
     </tr>
     <tr>
+        <td><h5>Cliente: {{ $nombres }} {{ $apellidos }}</h5></td>
+    </tr>     
+    <tr>
         <td class="centro"><h5>TICKET DE INGRESO</h5></td>
     </tr>
       <tr>

@@ -25,7 +25,7 @@
         <td class="centro"><h5>TICKET DE SALIDA</h5></td>
     </tr>
     <tr>
-        <td><h5>Nro. Factura: {{ $numero_factura }}</h5></td>
+        <td><h5>Nro. Factura: {{ $numero_factura }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cliente: {{ $nombres }} {{ $apellidos }}</h5></td>
     </tr>    
     <tr>
         <td class="centro"><h2>Salida: {{ $hora_salida }}</h2></td>

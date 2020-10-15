@@ -32,3 +32,7 @@ Route::put('/registrar/salida/{tipo_vehiculo_id}', 'movimientosController@regist
 
 Route::get('/imprimir/ticketentrada/{identificador}', 'movimientosController@imprimirTicketEntrada');
 Route::post('/imprimir/ticketsalida', 'movimientosController@imprimirTicketSalida');
+Route::post('/imprimir/entradasalida', 'movimientosController@imprimirEntradaSalida');
+Route::post('/imprimir/vehiculostipo', 'movimientosController@imprimirVehiculosTipo');
+Route::post('/imprimir/totaldiario', 'movimientosController@imprimirTotalDiario');
+Route::post('/imprimir/masutilizado', 'movimientosController@imprimirMasUtilizado');
